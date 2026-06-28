@@ -79,14 +79,33 @@
             } catch (e) { console.error("無法連線至排行榜伺服器"); }
         }
 
+// ... 請找到原本的 renderLeaderboard 並替換為以下內容 ...
+
         async function renderLeaderboard() {
             try {
-                const response = await fetch(GAS_URL);
+                // 加入時間戳記避免瀏覽器讀取舊的快取資料
+                const response = await fetch(GAS_URL + "?t=" + Date.now(), {
+                    method: 'GET',
+                    mode: 'cors'
+                });
                 const scores = await response.json();
+                
+                if (Array.isArray(scores) && scores.length > 0) {
+                    leaderboard.classList.remove('hidden');
+                    scoreList.innerHTML = scores.map((s, i) => 
+                        `<li class="py-1 border-b">${i + 1}. ${s.name}: ${s.score} 分</li>`
+                    ).join('');
+                }
+            } catch(e) {
+                console.error("無法取得排行榜資料:", e);
+                // 如果失敗，在 UI 上給予一點提示
+                scoreList.innerHTML = `<li class="text-red-500 text-sm">暫無法連線排行榜</li>`;
                 leaderboard.classList.remove('hidden');
-                scoreList.innerHTML = scores.map((s, i) => `<li class="py-1 border-b">${i + 1}. ${s.name}: ${s.score} 分</li>`).join('');
-            } catch(e) { console.log("暫時無法讀取排行榜"); }
+            }
         }
+        
+        // ... 同時確保頁面載入時會自動執行一次 ...
+        window.onload = renderLeaderboard;
 
         async function getAiAdvice() {
             aiAdviceContainer.classList.remove('hidden');
